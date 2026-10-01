@@ -149,6 +149,7 @@
   .settle .s-l .l2{font-family:"ZCOOL KuaiLe","Noto Sans SC",sans-serif;font-size:24px;color:var(--cloud-deep)}
   .settle .s-l .l2 small{font-size:13px}
   .settle .next{font-size:12px;color:var(--cloud-deep)}
+  .settle-btns{display:flex;gap:8px;flex:none}
   .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;
     padding:10px 18px;border-radius:12px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:30;white-space:nowrap}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -173,6 +174,34 @@
     .hero h1{font-size:25px}
     .hero-grid{grid-template-columns:repeat(3,1fr)}
     .hero-stat .v{font-size:17px}
+  }
+
+  /* ===== 导出打印区（屏幕隐藏，打印/存PDF时显示） ===== */
+  #printArea{display:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #printArea .p-head{text-align:center;border-bottom:2px solid #3E7FBC;padding-bottom:12px;margin-bottom:4px}
+  #printArea .p-head h1{font-size:21px;color:#2E4B6B;font-weight:700;margin-bottom:5px}
+  #printArea .p-sub{font-size:12px;color:#6E8CA8}
+  #printArea h2{font-size:14px;color:#3E7FBC;margin:20px 0 9px;padding-left:9px;border-left:3px solid #5B9BD5;line-height:1.2}
+  #printArea table{width:100%;border-collapse:collapse;font-size:12.5px}
+  #printArea th{background:#E3F0FB;color:#2E4B6B;padding:8px 9px;text-align:left;border:1px solid #C6E1F5;font-weight:700}
+  #printArea td{padding:8px 9px;border:1px solid #D9E8F7;vertical-align:top}
+  #printArea .r{text-align:right}
+  #printArea .c{text-align:center}
+  #printArea tr{page-break-inside:avoid}
+  #printArea .over{color:#E58393;font-size:10.5px}
+  #printArea .total-row td{background:#F2F7FE;font-weight:700;color:#3E7FBC}
+  #printArea .p-amount{font-size:26px;font-weight:700;color:#3E7FBC;line-height:1.2}
+  #printArea .p-amount span{font-size:12px;color:#6E8CA8;font-weight:400;margin-left:10px}
+  #printArea .gift-ul{list-style:none;display:flex;flex-wrap:wrap;gap:7px;padding:0}
+  #printArea .gift-ul li{border:1px solid #C6E1F5;background:#E3F0FB;border-radius:99px;padding:5px 12px;font-size:12.5px;color:#2E4B6B}
+  #printArea .p-none{font-size:12.5px;color:#6E8CA8}
+  #printArea .foot{margin-top:22px;font-size:11px;color:#6E8CA8;text-align:center;border-top:1px dashed #D9E8F7;padding-top:11px}
+
+  @media print{
+    body{background:#fff !important;padding:0 !important}
+    body > *:not(#printArea){display:none !important}
+    #printArea{display:block !important}
+    @page{margin:14mm}
   }
 </style>
 </head>
@@ -245,7 +274,7 @@
     <div class="plist" id="plist"></div>
   </section>
 
-  <footer>云豚快闪周边 · 单价与限购以现场公示为准 · 本页离线可下载使用</footer>
+  <footer>云豚快闪周边 · 单价与限购以现场公示为准 · 本页离线可下载使用<br>导出 PDF：点右下角「导出PDF」，在打印界面选择「存储为 PDF」</footer>
 </div>
 
 <!-- ===== 底部结算 ===== -->
@@ -256,10 +285,16 @@
       <div class="l2"><small>¥</small><span id="sAmt">0</span></div>
     </div>
     <div class="next" id="sNext"></div>
-    <button class="btn primary" id="btnReset">重置</button>
+    <div class="settle-btns">
+      <button class="btn" id="btnPdf">导出PDF</button>
+      <button class="btn primary" id="btnReset">重置</button>
+    </div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
+
+<!-- ===== 导出打印区（屏幕不显示） ===== -->
+<div id="printArea"></div>
 
 <script>
 /* ================= 商品目录（源自《云豚快闪计算器.xlsx》Sheet1） ================= */
@@ -284,7 +319,7 @@ const PRODUCTS=[
 ["布丁云豚滴胶PP夹",6.8,3],["软曲奇云滴胶PP夹",6.8,3],["寿司趴趴豚滴胶PP夹",6.8,3],
 ["布丁豚豚便利贴",14.8,5],["巧克力云云便利贴",14.8,5],["面包豚豚卡套",16.8,3],
 ["甜品云豚触感吧唧（一组2枚）",12.8,3],["烘焙吧唧*2（一组2枚）",14.8,5],
-["夏日云豚触感吧唧（一组2枚）",12.8,3],["烘焙豚刺绣吧唧",14.8,5],["棉花糖粉扑套盒",48.8,5],
+["夏日云豚触感吧唧（一组2枚）",12.8,3],["烘焙豚刺绣吧唧",14.8,5],["棉花糖粉扑套盒",32.8,5],
 ["云豚香片（4个/袋）",10.8,5]
 ];
 
@@ -300,6 +335,7 @@ const TIERS=[
 const qty=new Array(PRODUCTS.length).fill(0);
 let filter="";
 const $=id=>document.getElementById(id);
+const fmt=v=>v.toFixed(1).replace(/\.0$/,"");
 
 /* ---------- 渲染商品列表 ---------- */
 function renderList(){
@@ -400,6 +436,87 @@ function calc(){
   renderList();
 }
 
+/* ---------- 导出 PDF（商品名·单价·数量·小计·总价·满赠） ---------- */
+let pdfHinted=false;
+function exportPDF(){
+  const rows=[];
+  let amount=0,count=0,items=0;
+
+  for(let i=0;i<PRODUCTS.length;i++){
+    const q=qty[i];
+    if(q<=0) continue;
+    const name=PRODUCTS[i][0], price=PRODUCTS[i][1], limit=PRODUCTS[i][2];
+    const eff=Math.min(q,limit);
+    const sub=Math.round(eff*price*10)/10;
+    amount+=sub; count+=eff; items++;
+    rows.push({name,price,eff,sub,limit,over:q>limit});
+  }
+
+  if(rows.length===0){ toast("还没有选中任何商品"); return; }
+
+  amount=Math.round(amount*10)/10;
+  const achieved=TIERS.filter(t=>amount>=t.th);
+
+  const n=new Date();
+  const pad=x=>String(x).padStart(2,"0");
+  const dateStr=n.getFullYear()+"-"+pad(n.getMonth()+1)+"-"+pad(n.getDate())+" "+pad(n.getHours())+":"+pad(n.getMinutes());
+
+  const itemRows=rows.map(r=>`<tr>
+      <td>${r.name}${r.over?` <span class="over">（超限购，按 ${r.limit} 计）</span>`:""}</td>
+      <td class="r">¥${fmt(r.price)}</td>
+      <td class="c">${r.eff}</td>
+      <td class="r">¥${fmt(r.sub)}</td>
+    </tr>`).join("");
+
+  const giftHtml=achieved.length
+    ? `<ul class="gift-ul">${achieved.map(t=>`<li>满 ¥${t.th}：${t.g}</li>`).join("")}</ul>`
+    : `<div class="p-none">当前金额未满 ¥${TIERS[0].th}，暂无满赠</div>`;
+
+  $("printArea").innerHTML=`
+    <div class="p-head">
+      <h1>云豚快闪 · 购物清单</h1>
+      <div class="p-sub">导出时间：${dateStr}</div>
+    </div>
+
+    <h2>选购明细</h2>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:46%">商品名称</th>
+          <th class="r" style="width:18%">单价</th>
+          <th class="c" style="width:14%">数量</th>
+          <th class="r" style="width:22%">小计</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemRows}
+        <tr class="total-row">
+          <td>合计</td>
+          <td class="r">—</td>
+          <td class="c">${count}</td>
+          <td class="r">¥${fmt(amount)}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>应付总额</h2>
+    <div class="p-amount">¥${fmt(amount)}<span>共 ${count} 件 · ${items} 款</span></div>
+
+    <h2>可获满赠</h2>
+    ${giftHtml}
+
+    <div class="foot">云豚快闪周边 · 单价与限购以现场公示为准</div>
+  `;
+
+  if(!pdfHinted){
+    pdfHinted=true;
+    toast("在打印界面选择「存储为 PDF」");
+    setTimeout(()=>window.print(),900);
+  }else{
+    setTimeout(()=>window.print(),60);
+  }
+}
+
 /* ---------- 事件 ---------- */
 $("plist").addEventListener("click",e=>{
   const btn=e.target.closest("button[data-i]");
@@ -422,6 +539,7 @@ $("btnNone").addEventListener("click",()=>{
 $("btnReset").addEventListener("click",()=>{
   qty.fill(0);filter="";$("search").value="";calc();toast("已重置计算器");
 });
+$("btnPdf").addEventListener("click",exportPDF);
 
 let toastTimer;
 function toast(msg){
