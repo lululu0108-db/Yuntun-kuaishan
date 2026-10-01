@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>云豚快闪 · 满赠计算器</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%235B9BD5' d='M17 8a5 5 0 0 0-9.6-1.7A4.2 4.2 0 0 0 5 14.5h12a4 4 0 0 0 0-6.5z'/%3E%3Cpath fill='%239BD0F0' d='M6.5 16.5c1.5 1.6 4 1.6 5.5 0 1.5 1.6 4 1.6 5.5 0l1.5-1.2c.3 1.9-1.1 3.7-3 3.7-1.6 0-2.6-1-4-1s-2.4 1-4 1c-1.9 0-3.3-1.8-3-3.7z'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --cream:#EFF6FF;
+    --cream2:#E1EEFB;
+    --ink:#2E4B6B;
+    --ink-soft:#6E8CA8;
+    --cloud:#5B9BD5;
+    --cloud-deep:#3E7FBC;
+    --cloud-soft:#E3F0FB;
+    --pink:#7FC6E8;
+    --pink-deep:#4E9FD0;
+    --pink-soft:#E8F4FC;
+    --card:#FFFFFF;
+    --line:#D9E8F7;
+    --ok:#4CAF7D;
+    --warn:#E58393;
+    --radius:16px;
+    --shadow:0 6px 22px rgba(94,150,210,.14);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    font-family:"Noto Sans SC",-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+    line-height:1.5;
+    padding-bottom:120px;
+  }
+  /* ===== 云朵装饰 ===== */
+  .clouds{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+  .clouds svg{position:absolute;opacity:.55}
+  .c1{width:240px;height:90px;top:8px;left:-40px;color:var(--cloud-soft)}
+  .c2{width:170px;height:64px;top:16px;right:-30px;color:var(--pink-soft)}
+  .c3{width:120px;height:46px;bottom:24px;left:18%;color:var(--cloud-soft)}
+  .s1,.s2,.s3{color:#C7E2F8;opacity:.95}
+  .s1{width:30px;height:30px;top:120px;left:12%}
+  .s2{width:18px;height:18px;top:60px;right:22%}
+  .s3{width:22px;height:22px;bottom:84px;right:8%}
+
+  .wrap{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:18px 16px}
+
+  /* ===== 顶栏 ===== */
+  header.top{
+    position:sticky;top:0;z-index:20;background:rgba(239,246,255,.92);
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--line);
+  }
+  .top-inner{max-width:980px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .logo{width:38px;height:38px;flex:none}
+  .brand .t1{font-family:"ZCOOL KuaiLe","Noto Sans SC",sans-serif;font-size:20px;letter-spacing:1px}
+  .brand .t2{font-size:11px;color:var(--ink-soft);margin-top:1px}
+  .top-total{margin-left:auto;text-align:right}
+  .top-total .lbl{font-size:11px;color:var(--ink-soft)}
+  .top-total .num{font-family:"ZCOOL KuaiLe","Noto Sans SC",sans-serif;font-size:22px;color:var(--cloud-deep)}
+  .top-total .num small{font-size:13px}
+
+  /* ===== 主卡 ===== */
+  .hero{
+    background:linear-gradient(135deg,#3E7FBC 0%,#5B9BD5 45%,#8FC4EC 100%);
+    color:#fff;border-radius:22px;padding:26px 22px;margin-top:16px;
+    position:relative;overflow:hidden;box-shadow:var(--shadow);
+  }
+  .hero::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;
+    background:radial-gradient(circle,rgba(255,255,255,.22),transparent 65%);border-radius:50%}
+  .hstar{position:absolute;right:22px;top:20px;width:42px;height:42px;color:#fff;opacity:.55}
+  .hero .eyebrow{font-size:12px;letter-spacing:3px;opacity:.9}
+  .hero h1{font-family:"ZCOOL KuaiLe","Noto Sans SC",sans-serif;font-size:30px;margin:6px 0 4px;letter-spacing:1px}
+  .hero p{font-size:13px;opacity:.94;max-width:34em}
+  .hero-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:20px}
+  .hero-stat{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);border-radius:14px;padding:12px 14px}
+  .hero-stat .v{font-family:"ZCOOL KuaiLe","Noto Sans SC",sans-serif;font-size:24px;line-height:1.2}
+  .hero-stat .k{font-size:11px;opacity:.9;margin-top:2px}
+
+  /* ===== 满赠 ===== */
+  section{background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:20px 18px;margin-top:16px}
+  .sec-h{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+  .sec-h h2{font-family:"ZCOOL KuaiLe","Noto Sans SC",sans-serif;font-size:19px}
+  .sec-h .tag{font-size:11px;color:var(--ink-soft)}
+  .sec-desc{font-size:12.5px;color:var(--ink-soft);margin-bottom:14px}
+  .progress{margin-bottom:16px}
+  .progress .pl{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-soft);margin-bottom:6px}
+  .progress .pl b{color:var(--cloud-deep)}
+  .bar{height:12px;background:var(--cream2);border-radius:99px;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--cloud-deep),var(--cloud));transition:width .35s ease}
+
+  .tiers{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+  .tier{border:1px solid var(--line);border-radius:14px;padding:12px 10px;text-align:center;position:relative;transition:.2s}
+  .tier .lv{font-family:"ZCOOL KuaiLe","Noto Sans SC",sans-serif;font-size:13px;color:var(--ink-soft)}
+  .tier .th{font-family:"ZCOOL KuaiLe","Noto Sans SC",sans-serif;font-size:19px;color:var(--cloud-deep);margin:2px 0}
+  .tier .gift{font-size:11.5px;line-height:1.4;min-height:3em;color:var(--ink-soft);display:flex;align-items:center;justify-content:center}
+  .tier .st{display:inline-block;margin-top:6px;font-size:11px;padding:2px 8px;border-radius:99px}
+  .tier.done{border-color:var(--ok);background:#F0FAF4}
+  .tier.done .st{background:var(--ok);color:#fff}
+  .tier.pending{opacity:.62}
+  .tier.pending .st{background:var(--cream2);color:var(--ink-soft)}
+  .tier.next{border-color:var(--cloud);box-shadow:0 0 0 2px var(--cloud-soft)}
+  .tier.next .st{background:var(--cloud);color:#fff}
+
+  .giftbox{margin-top:16px;border:1px dashed var(--cloud);background:var(--cloud-soft);border-radius:14px;padding:14px 16px}
+  .giftbox .gb-h{font-size:13px;color:var(--cloud-deep);font-weight:700;margin-bottom:8px}
+  .giftbox ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px}
+  .giftbox li{background:#fff;border:1px solid #C6E1F5;color:var(--ink);border-radius:99px;padding:5px 12px;font-size:12.5px}
+  .giftbox .empty{font-size:12.5px;color:var(--ink-soft)}
+  .giftbox .empty b{color:var(--cloud-deep)}
+
+  /* ===== 商品 ===== */
+  .toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .search{flex:1;min-width:200px;position:relative}
+  .search input{width:100%;padding:11px 14px 11px 38px;border:1px solid var(--line);border-radius:12px;font-size:16px;background:#F2F7FE;outline:none;color:var(--ink)}
+  .search input:focus{border-color:var(--cloud)}
+  .search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-soft)}
+  .btn{padding:11px 16px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:13.5px;color:var(--ink-soft);cursor:pointer;font-family:inherit}
+  .btn:hover{border-color:var(--cloud);color:var(--cloud-deep)}
+  .btn.primary{background:var(--cloud-deep);border-color:var(--cloud-deep);color:#fff;font-weight:700}
+  .btn.primary:hover{background:#2F6EA8;border-color:#2F6EA8}
+  .count-lbl{font-size:12px;color:var(--ink-soft);align-self:center}
+
+  .plist{display:flex;flex-direction:column;gap:10px}
+  .item{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:11px 14px;background:#fff}
+  .item .name{font-size:14px;font-weight:600}
+  .item .meta{font-size:11.5px;color:var(--ink-soft);margin-top:3px}
+  .item .meta b{color:var(--cloud-deep)}
+  .item .meta .limit{color:var(--cloud-deep)}
+  .ctrl{display:flex;align-items:center;gap:8px}
+  .qty{display:flex;align-items:center;gap:2px}
+  .qty button{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:#F2F7FE;font-size:17px;color:var(--cloud-deep);cursor:pointer;font-family:inherit;line-height:1}
+  .qty button:hover{border-color:var(--cloud);background:var(--cloud-soft)}
+  .qty .qv{min-width:34px;text-align:center;font-size:15px;font-weight:700}
+  .sub{width:66px;text-align:right}
+  .sub .amt{font-family:"ZCOOL KuaiLe","Noto Sans SC",sans-serif;font-size:15px;color:var(--cloud-deep)}
+  .sub .cap{font-size:10px;color:var(--warn)}
+  .empty-state{text-align:center;color:var(--ink-soft);padding:30px 0;font-size:13.5px}
+
+  /* ===== 底部结算栏 ===== */
+  .settle{
+    position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(255,255,255,.96);
+    backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:12px 16px;
+  }
+  .settle-in{max-width:980px;margin:0 auto;display:flex;align-items:center;gap:14px}
+  .settle .s-l{flex:1;min-width:0}
+  .settle .s-l .l1{font-size:11px;color:var(--ink-soft)}
+  .settle .s-l .l2{font-family:"ZCOOL KuaiLe","Noto Sans SC",sans-serif;font-size:24px;color:var(--cloud-deep)}
+  .settle .s-l .l2 small{font-size:13px}
+  .settle .next{font-size:12px;color:var(--cloud-deep)}
+  .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;
+    padding:10px 18px;border-radius:12px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:30;white-space:nowrap}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  footer{text-align:center;color:var(--ink-soft);font-size:11.5px;margin-top:18px;padding:0 16px}
+  footer b{color:var(--cloud-deep)}
+
+  @media (max-width:760px){
+    .hero-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+    .hero-stat{padding:10px 8px}
+    .hero-stat .v{font-size:19px}
+    .tiers{grid-template-columns:repeat(3,1fr)}
+    .tier:last-child:nth-child(3n+1){grid-column:span 3}
+    .item{grid-template-columns:1fr auto}
+    .item .meta{font-size:12.5px}
+    .tier .gift{font-size:12px;min-height:2.6em}
+    .sec-desc{font-size:13px}
+    .giftbox li{font-size:13px}
+    .count-lbl{font-size:12.5px}
+  }
+  @media (max-width:420px){
+    .hero h1{font-size:25px}
+    .hero-grid{grid-template-columns:repeat(3,1fr)}
+    .hero-stat .v{font-size:17px}
+  }
+</style>
+</head>
+<body>
+<div class="clouds" aria-hidden="true">
+  <svg class="c1" viewBox="0 0 240 90" fill="currentColor"><path d="M46 76C20 76 0 61 0 44s20-32 46-32c7-16 23-27 43-27 24 0 44 16 48 38 20-2 35 8 35 23s-15 30-40 30z"/></svg>
+  <svg class="c2" viewBox="0 0 170 64" fill="currentColor"><path d="M32 54C14 54 0 44 0 31s14-23 32-23c5-12 16-20 30-20 17 0 31 11 34 27 14-2 24 6 24 16s-10 23-28 23z"/></svg>
+  <svg class="c3" viewBox="0 0 120 46" fill="currentColor"><path d="M22 39C9 39 0 32 0 23s9-16 22-16c4-8 12-14 23-14 13 0 23 9 25 20 10-1 17 4 17 11s-8 19-21 19z"/></svg>
+  <svg class="s1" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c.9 6.4 4.7 10.2 12 12-7.3 1.8-11.1 5.6-12 12-.9-6.4-4.7-10.2-12-12C7.3 10.2 11.1 6.4 12 0z"/></svg>
+  <svg class="s2" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c.9 6.4 4.7 10.2 12 12-7.3 1.8-11.1 5.6-12 12-.9-6.4-4.7-10.2-12-12C7.3 10.2 11.1 6.4 12 0z"/></svg>
+  <svg class="s3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c.9 6.4 4.7 10.2 12 12-7.3 1.8-11.1 5.6-12 12-.9-6.4-4.7-10.2-12-12C7.3 10.2 11.1 6.4 12 0z"/></svg>
+</div>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 24 24"><path fill="#5B9BD5" d="M17 8a5 5 0 0 0-9.6-1.7A4.2 4.2 0 0 0 5 14.5h12a4 4 0 0 0 0-6.5z"/><path fill="#9BD0F0" d="M6.5 16.5c1.5 1.6 4 1.6 5.5 0 1.5 1.6 4 1.6 5.5 0l1.5-1.2c.3 1.9-1.1 3.7-3 3.7-1.6 0-2.6-1-4-1s-2.4 1-4 1c-1.9 0-3.3-1.8-3-3.7z"/></svg>
+      <div>
+        <div class="t1">云豚快闪</div>
+        <div class="t2">满赠计算器</div>
+      </div>
+    </div>
+    <div class="top-total">
+      <div class="lbl">当前合计</div>
+      <div class="num"><small>¥</small><span id="topAmt">0</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- ===== 主视觉 ===== -->
+  <div class="hero">
+    <div class="eyebrow">YUNTU POP-UP SHOP</div>
+    <h1>云豚快闪 · 选购计算</h1>
+    <p>选择心仪的云豚周边，实时计算消费金额，并自动帮您确认可获得的全部满赠好礼。</p>
+    <svg class="hstar" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c.9 6.4 4.7 10.2 12 12-7.3 1.8-11.1 5.6-12 12-.9-6.4-4.7-10.2-12-12C7.3 10.2 11.1 6.4 12 0z"/></svg>
+    <div class="hero-grid">
+      <div class="hero-stat"><div class="v"><span id="hCount">0</span></div><div class="k">选购件数</div></div>
+      <div class="hero-stat"><div class="v"><span id="hItems">0</span></div><div class="k">参与商品</div></div>
+      <div class="hero-stat"><div class="v" id="hGifts">—</div><div class="k">已获赠档</div></div>
+    </div>
+  </div>
+
+  <!-- ===== 满赠 ===== -->
+  <section>
+    <div class="sec-h"><h2>满赠好礼</h2><span class="tag">累计消费达标即得，可叠赠</span></div>
+    <p class="sec-desc">五档满赠，满足门槛即解锁对应赠品，全部赠品可叠加领取。</p>
+    <div class="progress">
+      <div class="pl"><span>当前累计 <b id="pAmt">¥0</b></span><span id="pTarget"></span></div>
+      <div class="bar"><i id="pBar" style="width:0%"></i></div>
+    </div>
+    <div class="tiers" id="tiers"></div>
+    <div class="giftbox">
+      <div class="gb-h">本次可获赠品（叠赠）</div>
+      <ul id="giftList"></ul>
+    </div>
+  </section>
+
+  <!-- ===== 商品选购 ===== -->
+  <section>
+    <div class="sec-h"><h2>选购周边</h2><span class="tag" id="countLbl"></span></div>
+    <div class="toolbar">
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="search" type="text" placeholder="搜索商品名称，如“娃娃”“吧唧”“冰箱贴”" autocomplete="off">
+      </div>
+      <button class="btn" id="btnAll">全选</button>
+      <button class="btn" id="btnNone">清空</button>
+    </div>
+    <div class="plist" id="plist"></div>
+  </section>
+
+  <footer>云豚快闪周边 · 单价与限购以现场公示为准 · 本页离线可下载使用</footer>
+</div>
+
+<!-- ===== 底部结算 ===== -->
+<div class="settle">
+  <div class="settle-in">
+    <div class="s-l">
+      <div class="l1" id="sL1">消费金额</div>
+      <div class="l2"><small>¥</small><span id="sAmt">0</span></div>
+    </div>
+    <div class="next" id="sNext"></div>
+    <button class="btn primary" id="btnReset">重置</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= 商品目录（源自《云豚快闪计算器.xlsx》Sheet1） ================= */
+/* [名称, 单价, 限购] */
+const PRODUCTS=[
+["王小豆棉花娃娃",76.8,1],["王小呆棉花娃娃",76.8,1],["面包小熊头套",28.8,1],
+["小柠檬娃衣",42.8,1],["豚豚厨师娃衣",48.8,1],["芒果糯米饭娃衣",42.8,1],["瑞士卷娃衣",48.8,1],
+["柠檬娃包",48.8,2],["面包娃包",48.8,2],["豚豚60CM抱枕",118.8,1],["云云50CM抱枕",88.8,1],
+["2.5D面包娃娃（云款）",48.8,1],["2.5D面包娃娃（豚款）",48.8,1],["豚云豚娃娃（一组3只）",78.8,1],
+["蛋糕豚豚娃娃",62.8,1],["蛋糕云云娃娃",62.8,1],["糖葫芦款毛绒串",68.8,2],
+["刺绣毛绒云豚吧唧（一组2枚）",48.8,1],["刺绣刘海贴*2（一组2枚）",22.8,1],["双层保温袋",53.8,5],
+["三格饭盒",52.8,5],["磨砂马克杯",34.8,3],["幸运云云包",59.8,3],["化妆包",54.8,1],
+["云豚316冰霸杯",72.8,3],["云豚小厨包",44.8,3],["毛绒豚豚包",59.8,3],["刺绣收纳包",34.8,3],
+["云豚甜品挂绳",8.8,3],["云豚刺绣化妆包",59.8,1],["云豚小风扇",69.8,1],["云豚化妆镜",17.8,1],
+["云云按摩锤",54.8,1],["豚豚按摩锤",54.8,1],["云豚数据线收纳",10.8,1],["杭州限定冰箱贴",8.8,1],
+["云豚烘焙师冰箱贴*2（一组2枚）",14.8,5],["四芒星冰箱贴（一组2枚）",14.8,5],
+["A7手帐套组（活页壳+分隔页+内页*45）",38.8,3],["咕卡贴纸",6.8,5],["小圆贴纸",6.8,5],["胶带",14.8,5],
+["开口文件夹",8.8,5],["颜文字开口文件夹",8.8,3],["纽扣文件夹",12.8,5],["皮质收纳护照夹",26.8,3],
+["刺绣御守",14.8,5],["云豚双面笔袋",32.8,3],["充棉标",8.8,5],["云云泡泡棉",9.8,5],["豚豚泡泡棉",9.8,5],
+["厚滴胶钥匙扣A款",8.8,5],["厚滴胶钥匙扣B款",8.8,5],["厚滴胶钥匙扣C款",8.8,5],["摇摇乐磁吸手机支架",24.8,3],
+["云豚捏捏",58.8,1],["小蓝莓磁吸手机支架",22.8,3],["拓麻歌子",18.8,5],["摇摇乐立牌",16.8,5],
+["布丁云豚滴胶PP夹",6.8,3],["软曲奇云滴胶PP夹",6.8,3],["寿司趴趴豚滴胶PP夹",6.8,3],
+["布丁豚豚便利贴",14.8,5],["巧克力云云便利贴",14.8,5],["面包豚豚卡套",16.8,3],
+["甜品云豚触感吧唧（一组2枚）",12.8,3],["烘焙吧唧*2（一组2枚）",14.8,5],
+["夏日云豚触感吧唧（一组2枚）",12.8,3],["烘焙豚刺绣吧唧",14.8,5],["棉花糖粉扑套盒",48.8,5],
+["云豚香片（4个/袋）",10.8,5]
+];
+
+/* ================= 满赠档位（源自《满赠计算器》） ================= */
+const TIERS=[
+  {th:188,g:"香片 + 书签吧唧"},
+  {th:388,g:"触感吧唧 + 扇子"},
+  {th:520,g:"人偶服合影券"},
+  {th:880,g:"编织购物袋"},
+  {th:1080,g:"打卡棒"}
+];
+
+const qty=new Array(PRODUCTS.length).fill(0);
+let filter="";
+const $=id=>document.getElementById(id);
+
+/* ---------- 渲染商品列表 ---------- */
+function renderList(){
+  const box=$("plist");
+  const kw=filter.trim();
+  const idx=[];
+  for(let i=0;i<PRODUCTS.length;i++){
+    if(!kw||PRODUCTS[i][0].includes(kw)) idx.push(i);
+  }
+  $("countLbl").textContent="共 "+PRODUCTS.length+" 款 · 显示 "+idx.length+" 款";
+  if(idx.length===0){
+    box.innerHTML='<div class="empty-state">没有找到匹配的商品，换个关键词试试吧</div>';
+    return;
+  }
+  box.innerHTML=idx.map(i=>{
+    const [name,price,limit]=PRODUCTS[i];
+    const q=qty[i];
+    const capped=q>limit;
+    const eff=capped?limit:q;
+    const amt=(eff*price).toFixed(1).replace(/\.0$/,"");
+    return `<div class="item">
+      <div>
+        <div class="name">${name}</div>
+        <div class="meta">单价 <b>¥${price}</b> · 限购 <span class="limit">${limit}${capped?"（已达限购）":""}</span></div>
+      </div>
+      <div class="ctrl">
+        <div class="qty">
+          <button data-i="${i}" data-d="-1" aria-label="减少">−</button>
+          <span class="qv">${q}</span>
+          <button data-i="${i}" data-d="1" aria-label="增加">+</button>
+        </div>
+        <div class="sub"><div class="amt">¥${amt}</div>${capped?'<div class="cap">按限购计</div>':""}</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+/* ---------- 满赠渲染 ---------- */
+function renderGifts(amount){
+  const tierBox=$("tiers");
+  let nextTh=null;
+  tierBox.innerHTML=TIERS.map((t,k)=>{
+    const done=amount>=t.th;
+    let cls=done?"done":(k===0?"next":"pending");
+    if(!done&&nextTh===null){nextTh=t.th;cls="next";}
+    return `<div class="tier ${cls}">
+      <div class="lv">第${["一","二","三","四","五"][k]}档</div>
+      <div class="th">¥${t.th}</div>
+      <div class="gift">${t.g}</div>
+      <span class="st">${done?"✓ 已达成":(cls==="next"?"下一档":"—")}</span>
+    </div>`;
+  }).join("");
+
+  const maxTh=TIERS[TIERS.length-1].th;
+  const pct=Math.min(100,amount/maxTh*100);
+  $("pBar").style.width=pct+"%";
+  $("pAmt").textContent="¥"+amount.toFixed(1).replace(/\.0$/,"");
+
+  if(amount>=maxTh){
+    $("pTarget").textContent="已达成全部满赠";
+  }else if(nextTh){
+    $("pTarget").innerHTML="距下一档还差 <b>¥"+(nextTh-amount).toFixed(1).replace(/\.0$/,"")+"</b>";
+  }else{
+    $("pTarget").textContent="";
+  }
+
+  const achieved=TIERS.filter(t=>amount>=t.th);
+  $("hGifts").textContent=achieved.length+"档";
+  const gl=$("giftList");
+  if(achieved.length===0){
+    gl.innerHTML=`<div class="empty">累计消费满 <b>¥188</b> 即可解锁第一档赠品</div>`;
+  }else{
+    gl.innerHTML=achieved.map(t=>`<li>${t.g}</li>`).join("");
+  }
+}
+
+/* ---------- 汇总 ---------- */
+function calc(){
+  let amount=0,count=0,items=0;
+  for(let i=0;i<PRODUCTS.length;i++){
+    const q=qty[i];
+    if(q<=0) continue;
+    const limit=PRODUCTS[i][2];
+    const eff=Math.min(q,limit);
+    amount+=eff*PRODUCTS[i][1];
+    count+=eff;
+    items++;
+  }
+  amount=Math.round(amount*10)/10;
+  const fmt=v=>v.toFixed(1).replace(/\.0$/,"");
+  const amtStr=fmt(amount);
+  $("topAmt").textContent=amtStr;
+  $("sAmt").textContent=amtStr;
+  $("hCount").textContent=count;
+  $("hItems").textContent=items;
+  $("sL1").textContent=count>0?`消费金额 · ${count} 件 · ${items} 款`:"消费金额";
+  renderGifts(amount);
+  renderList();
+}
+
+/* ---------- 事件 ---------- */
+$("plist").addEventListener("click",e=>{
+  const btn=e.target.closest("button[data-i]");
+  if(!btn) return;
+  const i=+btn.dataset.i,d=+btn.dataset.d;
+  const n=qty[i]+d;
+  if(n<0) return;
+  qty[i]=n;
+  calc();
+});
+$("search").addEventListener("input",e=>{filter=e.target.value;renderList();});
+$("btnAll").addEventListener("click",()=>{
+  qty.forEach((v,i)=>qty[i]=PRODUCTS[i][2]);
+  calc();
+  toast("已按各商品限购数全选");
+});
+$("btnNone").addEventListener("click",()=>{
+  qty.fill(0);calc();toast("已清空全部商品");
+});
+$("btnReset").addEventListener("click",()=>{
+  qty.fill(0);filter="";$("search").value="";calc();toast("已重置计算器");
+});
+
+let toastTimer;
+function toast(msg){
+  const t=$("toast");t.textContent=msg;t.classList.add("show");
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),1600);
+}
+
+calc();
+</script>
+</body>
+</html>
